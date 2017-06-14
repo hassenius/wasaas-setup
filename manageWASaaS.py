@@ -44,7 +44,7 @@ p = Popen(['ssh-keyscan', '-t', 'ssh-rsa', adminip], stdin=PIPE, stdout=PIPE, st
 o, r = p.communicate()
 home = os.getenv('HOME')
 with open(home + "/.ssh/known_hosts", 'a') as f:
-  f.write(o.strip())
+  f.write(o.strip()+'\n')
 
 # Copy ssh keys etc to the service instance
 call(['sshpass', '-p', rootpw, 'ssh-copy-id', 'root@' + adminip])
