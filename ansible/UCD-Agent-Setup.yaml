@@ -16,9 +16,6 @@
     
   - name: Copy installation template
     template: src=templates/install-properties.j2 dest=/tmp/ibm-ucd-agent-install/install.properties backup=yes
-  
-  - name: Copy agent version
-    command: cat /tmp/ibm-ucd-agent-install
 
   - name: Install agent
     command: /tmp/ibm-ucd-agent-install/install-agent.sh chdir=/tmp/ibm-ucd-agent-install
