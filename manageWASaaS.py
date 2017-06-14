@@ -50,7 +50,7 @@ with open(home + "/.ssh/known_hosts", 'a') as f:
 call(['sshpass', '-p', rootpw, 'ssh-copy-id', 'root@' + adminip])
 
 # Call ansible to seutp agents
-call(['ansible-playbook', '-i', adminip +',', 'UCD-Agent-Setup.yml'], cwd='/home/virtuser/wasaas-setup/ansible')
+call(['ansible-playbook', '-i', adminip +',', 'UCD-Agent-Setup.yaml'], cwd='/home/virtuser/wasaas-setup/ansible')
 ## Later we might run this directly from python
 #pb = PlayBook(playbook='UCDsetup.yml', inventory=adminip+',')
 #pb.run()
