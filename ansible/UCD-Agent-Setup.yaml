@@ -1,0 +1,44 @@
+#ansible-playbook -i 169.45.191.48, UCDsetup.yml
+- hosts: all
+  vars_files:
+    - ucd-vars.yaml
+  remote_user: root
+  tasks:
+  - local_action: stat path=/home/virtuser/ibm-ucd-agent.zip
+    register: agentzip_exists
+
+  - name: Download latest UCD Agent
+    local_action: get_url url={{ ucd_server_url }}/tools/ibm-ucd-agent.zip dest=/home/virtuser force=no
+    when: agentzip_exists.stat.exists == False
+
+  - name: Copy UCD Agent Archive
+    unarchive: src=/home/virtuser/ibm-ucd-agent.zip dest=/tmp
+    
+  - name: Copy installation template
+    template: src=templates/install-properties.j2 dest=/tmp/ibm-ucd-agent-install/install.properties backup=yes
+  
+  - name: Copy agent version
+    command: cat /tmp/ibm-ucd-agent-install
+
+  - name: Install agent
+    command: /tmp/ibm-ucd-agent-install/install-agent.sh chdir=/tmp/ibm-ucd-agent-install
+
+  - name: Copy agent init
+    command: cp /opt/ibm-ucd/agent/bin/init/agent /etc/init.d/ibm-ucdagent
+
+  - name: Update init user for agent
+    lineinfile: dest=/etc/init.d/ibm-ucdagent state=present regexp='AGENT_USER=' line='AGENT_USER=root'
+    
+  - name: Update init group for agent
+    lineinfile: dest=/etc/init.d/ibm-ucdagent state=present regexp='AGENT_GROUP=' line='AGENT_GROUP=root'
+    
+  - name: Make sure firewall is open
+    iptables: chain=OUTPUT action=insert protocol=tcp destination_port={{ ucd_port }} policy=ACCEPT comment=UCD_AGENT
+    register: firewall
+
+  - name: Save iptables
+    command: service iptables save
+    when: firewall|changed
+
+  - name: Make sure agent is enabled and started
+    service: name=ibm-ucdagent enabled=yes state=started
