@@ -11,8 +11,13 @@
     local_action: get_url url={{ ucd_server_url }}/tools/ibm-ucd-agent.zip dest=/home/virtuser force=no
     when: agentzip_exists.stat.exists == False
 
+  - name: Check if ucdagent is already extracted
+    stat: path=/tmp/ibm-ucd-agent-install
+    register: ucdagent_on_target
+    
   - name: Copy UCD Agent Archive
     unarchive: src=/home/virtuser/ibm-ucd-agent.zip dest=/tmp
+    when: ucdagent_on_target.stat.exists == False
     
   - name: Copy installation template
     template: src=templates/install-properties.j2 dest=/tmp/ibm-ucd-agent-install/install.properties backup=yes
