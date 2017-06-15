@@ -35,7 +35,7 @@
     lineinfile: dest=/etc/init.d/ibm-ucdagent state=present regexp='AGENT_GROUP=' line='AGENT_GROUP=root'
     
   - name: Make sure firewall is open
-    iptables: chain=OUTPUT action=insert protocol=tcp destination_port={{ ucd_port }} policy=ACCEPT comment=UCD_AGENT
+    iptables: chain=OUTPUT action=insert protocol=tcp destination_port={{ ucd_port }} jump=ACCEPT comment=UCD_AGENT
     register: firewall
 
   - name: Save iptables
