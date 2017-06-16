@@ -1,0 +1,18 @@
+- hosts: all
+  vars_files:
+    - was-vars.yaml
+  remote_user: root
+  tasks:
+  - name: Copy installation script
+    template: src=templates/setupWasProfile.j2 dest=/tmp/setupWasProfile.py backup=yes
+  
+  - name: Run configuration script
+    command: /opt/IBM/WebSphere/Profiles/DefaultAppSrv01/bin/wsadmin.sh -lang jython -user {{ wsadminuser }} -password {{ wsadminpass }} -f /tmp/setupWasProfile.py
+
+  - name: Make sure firewall is open
+    iptables: chain=OUTPUT action=insert protocol=tcp destination_port={{ dbport }} jump=ACCEPT comment=SecureGateway_DB2_Port
+    register: firewall
+
+  - name: Save iptables
+    command: service iptables save
+    when: firewall|changed

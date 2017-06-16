@@ -1,0 +1,58 @@
+dbuser = '{{ dbuser }}'
+dbpass = '{{ dbpass }}'
+dbhost = '{{ dbhost }}'
+dbport = '{{ dbport }}'
+
+# Get server details
+NodeName  = AdminControl.getNode()
+CellName  = AdminControl.getCell()
+Cell      = AdminConfig.getid('/Cell:' + AdminControl.getCell() + '/')
+Server    = AdminConfig.getid('/Cell:' + CellName + '/Node:' + NodeName + '/Server:server1')
+Node      = AdminConfig.getid('/Cell:' + CellName + '/Node:' + NodeName + '/')
+
+
+
+# Make sure application security is enabled
+AdminTask.configureAdminWIMUserRegistry('[-verifyRegistry true ]')
+AdminTask.setGlobalSecurity ('[-enabled true]')
+securityConfigID = AdminConfig.getid("/Security:/")
+AdminConfig.modify(securityConfigID,[['appEnabled','true']])
+AdminConfig.save()
+
+# Make sure the Secure Shopper group exists
+AdminTask.createGroup('[-cn SecureShopper -description Our customers]')
+AdminTask.createUser ('[-uid kbrown -password bl0wfish -confirmPassword bl0wfish -cn myAdmin -sn JDoe]')
+AdminTask.createUser ('[-uid rbarcia -password bl0wfish -confirmPassword bl0wfish -cn myAdmin -sn JDoe]')
+AdminTask.addMemberToGroup('[-memberUniqueName uid=kbrown,o=defaultWIMFileBasedRealm -groupUniqueName cn=SecureShopper,o=defaultWIMFileBasedRealm]')
+AdminTask.addMemberToGroup('[-memberUniqueName uid=rbarcia,o=defaultWIMFileBasedRealm -groupUniqueName cn=SecureShopper,o=defaultWIMFileBasedRealm]')
+
+# Not sure I need this, but lets do it anyways
+AdminConfig.save()
+
+# Create DB User alias
+AdminTask.createAuthDataEntry('[-alias DBUser -user ' + dbuser + ' -password ' + dbpass + ' -description ]')
+AdminConfig.save()
+AdminTask.modifyAuthDataEntry('[-alias ' + NodeName + '/DBUser -user ' + dbuser + ' -description ]')
+AdminConfig.save()
+
+# Create provider
+provider = AdminTask.createJDBCProvider('[-scope Cell=' + CellName + ' -databaseType DB2 -providerType "DB2 Using IBM JCC Driver" -implementationType "XA data source" -name "DB2 Using IBM JCC Driver (XA)" -description "Two-phase commit DB2 JCC provider that supports JDBC 4.0 using the IBM Data Server Driver for JDBC and SQLJ. IBM Data Server Driver is the next generation of the DB2 Universal JCC driver. Data sources created under this provider support the use of XA to perform 2-phase commit processing. Use of JDBC driver type 2 on WebSphere Application Server for Z/OS is not supported for data sources created under this provider. This provider is configurable in version 7.0 and later nodes." -classpath [/opt/IBM/WebSphere/AppServer/deploytool/itp/plugins/com.ibm.datatools.db2_2.2.200.v20150728_2354/driver/db2jcc4.jar ${UNIVERSAL_JDBC_DRIVER_PATH}/db2jcc_license_cu.jar /opt/IBM/WebSphere/AppServer/deploytool/itp/plugins/com.ibm.datatools.db2_2.2.200.v20150728_2354/driver/db2jcc_license_cisuz.jar ${PUREQUERY_PATH}/pdq.jar ${PUREQUERY_PATH}/pdqmgmt.jar ] -nativePath [${DB2_JCC_DRIVER_NATIVEPATH} ] ]')
+AdminConfig.save()
+
+
+# Add Order database
+orderDS = AdminTask.createDatasource(provider, '[-name OrderDS -jndiName jdbc/orderds -dataStoreHelperClassName com.ibm.websphere.rsadapter.DB2UniversalDataStoreHelper -containerManagedPersistence true -componentManagedAuthenticationAlias ' + NodeName + '/DBUser -xaRecoveryAuthAlias ' + NodeName + '/DBUser -configureResourceProperties [[databaseName java.lang.String ORDERDB] [driverType java.lang.Integer 4] [serverName java.lang.String ' + dbhost + '] [portNumber java.lang.Integer ' + str(dbport) + ']]]')
+orderMM = AdminConfig.create('MappingModule', orderDS, '[[authDataAlias ' + NodeName + '/DBUser] [mappingConfigAlias DefaultPrincipalMapping]]')
+orderCF = AdminConfig.getid('/CMPConnectorFactory:OrderDS_CF/')
+AdminConfig.modify(orderCF, '[[name "OrderDS_CF"] [authDataAlias "' + NodeName + '/DBUser"] [xaRecoveryAuthAlias "' + NodeName + '/DBUser"]]')
+AdminConfig.create('MappingModule', orderCF, '[[authDataAlias ' + NodeName + '/DBUser] [mappingConfigAlias DefaultPrincipalMapping]]')
+AdminConfig.save()
+
+# Add inventory database
+inDS = AdminTask.createDatasource(provider, '[-name INDS -jndiName jdbc/inds -dataStoreHelperClassName com.ibm.websphere.rsadapter.DB2UniversalDataStoreHelper -containerManagedPersistence true -componentManagedAuthenticationAlias ' + NodeName + '/DBUser -xaRecoveryAuthAlias ' + NodeName + '/DBUser -configureResourceProperties [[databaseName java.lang.String INDB] [driverType java.lang.Integer 4] [serverName java.lang.String ' + dbhost + '] [portNumber java.lang.Integer ' + str(dbport) + ']]]')
+inMM = AdminConfig.create('MappingModule', inDS, '[[authDataAlias ' + NodeName + '/DBUser] [mappingConfigAlias DefaultPrincipalMapping]]')
+inCF = AdminConfig.getid('/CMPConnectorFactory:INDS_CF/')
+AdminConfig.modify(inCF, '[[name "INDS_CF"] [authDataAlias "' + NodeName + '/DBUser"] [xaRecoveryAuthAlias "' + NodeName + '/DBUser"]]')
+AdminConfig.create('MappingModule', inCF, '[[authDataAlias ' + NodeName + '/DBUser] [mappingConfigAlias DefaultPrincipalMapping]]')
+
+AdminConfig.save()
