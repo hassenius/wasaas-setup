@@ -16,3 +16,9 @@
   - name: Save iptables
     command: service iptables save
     when: firewall|changed
+
+  - name: Restart WAS server
+    command: chdir=/opt/IBM/WebSphere/Profiles/DefaultAppSrv01/bin {{ item }}
+    with_items:
+    - ./stopServer.sh server1
+    - ./startServer.sh server1
