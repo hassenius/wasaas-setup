@@ -7,6 +7,8 @@ However, it is possible to populate and launch the scripts by hand. This documen
 ## Setup OpenVPN
 Before you can communicate with the WASaaS instance for admin purposes you must setup OpenVPN.
 If you the script detects that it's not able to connect to the WASaaS instance it will download the openvpn configuration to ```<orgName>_<region>.zip```
+You can also force the download of the zip file by typing ```python manageWASaaS.py getVPN```
+
 Please unzip the file and follow these steps to connect with openvpn
 1. ```cd openvpn```
 2. ```sudo openvpn --config wasaas-<region>.ovpn &```
