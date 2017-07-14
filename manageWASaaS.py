@@ -13,6 +13,8 @@ space = l['space']
 apiKey= l['apiKey']
 regionKey = l['regionKey']
 instanceName = l['instanceName']
+install = l['install']
+
 
 bx = BluemixAPI(region_key = regionKey, apiKey = apiKey)
 authorization = 'Bearer ' + bx.get_token()
@@ -49,9 +51,39 @@ with open(home + "/.ssh/known_hosts", 'a') as f:
 # Copy ssh keys etc to the service instance
 call(['sshpass', '-p', rootpw, 'ssh-copy-id', 'root@' + adminip])
 
-# Call ansible to seutp agents
-call(['ansible-playbook', '-i', adminip +',', 'UCD-Agent-Setup.yaml'], cwd='/home/virtuser/wasaas-setup/ansible')
-## Later we might run this directly from python
+
+# Install the necessary bits
+if 'ucdagent' in install:
+  # Call ansible to setup agents
+  # We're assuming UCD will already have populated ucd-vars.yaml
+  call(['ansible-playbook', '-i', adminip +',', 'UCD-Agent-Setup.yaml'], cwd='/home/virtuser/wasaas-setup/ansible')
+  
+if 'was_profile' in install:
+  # Get wsadmin user and password from WASaaS broker
+  wsadmin = was.get_wsadmin_user()
+  wspass = was.get_wsadmin_password()
+  
+  changed = False
+  # Load the was-vars.yaml
+  with open("ansible/was-vars.yaml", 'r') as s:
+    l = yaml.load(s)
+  
+  if l['wsadminuser'] != wsadmin:
+    l['wsadminuser'] = str(wsadmin)
+    changed = True
+  
+  if l['wsadminpass'] != wspass:
+    l['wsadminpass'] = str(wspass)
+    changed = True
+    
+  if changed:
+    with open("ansible/was-vars.yaml", 'w') as f:
+      f.write(yaml.dump(l, default_flow_style=False))
+
+  call(['ansible-playbook', '-i', adminip +',', 'WAS-Setup.yaml'], cwd='/home/virtuser/wasaas-setup/ansible')
+
+
+## Later we might run runbooks directly from python
 #pb = PlayBook(playbook='UCDsetup.yml', inventory=adminip+',')
 #pb.run()
 
