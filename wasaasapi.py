@@ -6,6 +6,8 @@ class WASaaSAPI:
     self.si_name = si_name
     self.sid = ''
     self.adminip = ''
+    self.wsadmin_user = ''
+    self.wsadmin_pass = ''
     self.space = space
     self.org = org
     self.regionKey = region_key
@@ -23,6 +25,16 @@ class WASaaSAPI:
       'authorization': self.token,
       'Accept': 'application/json'
     }
+
+  def get_wsadmin_user(self):
+    if self.wsadmin_user == '':
+      self.fetch_resource_details()
+    return self.wsadmin_user
+
+  def get_wsadmin_password(self):
+    if self.wsadmin_pass == '':
+      self.fetch_resource_details()
+    return self.wsadmin_pass
 
   def get_adminip(self):
     if self.adminip == '':
@@ -66,6 +78,8 @@ class WASaaSAPI:
 
     self.adminip        = r.json()[0]['osHostname']
     self.rootpassword   = r.json()[0]['osAdminPassword']
+    self.wsadmin_user   = r.json()[0]['wasAdminUser']
+    self.wsadmin_pass   = r.json()[0]['wasAdminPass']
 
     return True
 
@@ -122,10 +136,6 @@ class WASaaSAPI:
       print "Don't support the service instance type %s " % si['ServiceInstance']['ServiceType']
       return False
     
-    # Get the resource details
-    res = get__resource_from_id
-    # Write necessary details to a file?
-  
 
 
       
