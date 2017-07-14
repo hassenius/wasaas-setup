@@ -37,9 +37,7 @@ There are also some additional branches that are not release specific and are th
    - Depending on configuration and network Github notifies Jenkins about the new pull request or Jenkins checks periodically for new pull requests
    - Jenkins pulls down the code in the pull request and looks for a file called Jenkinsfile which includes all the steps to be executed on the code
    - If all the steps completes successfully the code is automatically merged into the relevant ```*-dev``` branch
-   - Depending on organisational structure a merge to ```*-dev``` branch, or a periodical 'delivery train schedule' will trigger merge of ```*-dev``` branch into ```*-prod```
-   - The new code in ```*-prod``` will be built and pushed to UrbanCode Deploy which deploys the binaries to a QA environment.
-   - Upon successful validation in QA environment, the code can be deployed to production environment using UCD
+
    
 
 ### Use of Jenkins
@@ -124,6 +122,12 @@ In this document we will not go into details about these, but rather look at how
 
 As described above, new code is continously tested and integrated into the central code repository.
 At regular intervals (delivery train) code is merged into the production branch.
+
+The high level flow looks like this
+1. Depending on organisational structure a merge to ```*-dev``` branch, or a periodical 'delivery train schedule' will trigger merge of ```*-dev``` branch into ```*-prod```
+1. The new code in ```*-prod``` will be built and pushed to UrbanCode Deploy which deploys the binaries to a QA environment.
+1. Upon successful validation in QA environment, the code can be deployed to production environment using UCD
+   
 This is done by a Jenkins job that goes through the following steps:
 1. Check if the last commit in the development branch is a commit to update maven build version
 -> if not, it means that new commits have been tested and committed and can be merged into production branch
