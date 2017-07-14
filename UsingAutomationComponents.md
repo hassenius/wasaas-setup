@@ -6,6 +6,13 @@ However, it is possible to populate and launch the scripts by hand. This documen
 
 ## Setup OpenVPN
 Before you can communicate with the WASaaS instance for admin purposes you must setup OpenVPN.
+If you the script detects that it's not able to connect to the WASaaS instance it will download the openvpn configuration to ```<orgName>_<region>.zip```
+Please unzip the file and follow these steps to connect with openvpn
+1. ```cd openvpn```
+2. ```sudo openvpn --config wasaas-<region>.ovpn &```
+    i.e.
+    ```sudo openvpn --config wasaas-Public-US-South.ovpn &```
+
 
 ## Getting Bluemix API Key
 The scripts make use of Bluemix API keys rather than username/password combination to communicate with the Bluemix APIs.

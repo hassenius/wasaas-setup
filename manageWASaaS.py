@@ -1,4 +1,4 @@
-import socket, os, yaml
+import socket, os, yaml, sys
 #from ansible.playbook import PlayBook
 from subprocess import call, Popen, PIPE
 from bluemixapi import BluemixAPI
@@ -15,14 +15,27 @@ regionKey = l['regionKey']
 instanceName = l['instanceName']
 install = l['install']
 
-
 bx = BluemixAPI(region_key = regionKey, apiKey = apiKey)
 authorization = 'Bearer ' + bx.get_token()
 
 was = WASaaSAPI(region_key = regionKey, org = organisation, space = space, si_name = instanceName, token = authorization)
 
+# function for getting and saving OpenVPN file for the specific org/region
+def save_ovpn():
+  with open(organisation+'_'+regionKey+'.zip', 'wb') as f:
+      z = was.get_vpnConfig_zip()
+      f.write(z.decode('base64'))
+      
+#  z = was.get_vpnConfig_zip()
+#  f = open(organisation+'_'+regionKey+'.zip', 'wb')
+#  f.write(z.decode('base64'))
+#  f.close()
 
 ##### Setup a new service instance
+if sys.argv[1] == 'getVPN':
+  save_ovpn()
+  print('Ive downloaded the openvpn config to %s ' % (organisation+'_'+regionKey+'.zip') )
+  exit('Please setup openvpn to connect to region')
 
 # Check if we can connect
 s = socket.socket()
@@ -32,9 +45,13 @@ port = 22
 try:
   s.connect((adminip, port)) 
 except Exception as e: 
+  # OpenVPN connection is not active.
+  save_ovpn()
   print("something's wrong with %s:%d. Exception is %s" % (address, port, e))
+  print('Probably not connected with OpenVPN.')
+  print('Ive downloaded the openvpn config to %s ' % (organisation+'_'+regionKey+'.zip') )
   # Now we need to setup OpenVPN
-  exit('Please setup openvpn to connect to region')
+  exit('Please setup openvpn to connect to region and try again')
 finally:
   s.close()
 
@@ -86,4 +103,3 @@ if 'was_profile' in install:
 ## Later we might run runbooks directly from python
 #pb = PlayBook(playbook='UCDsetup.yml', inventory=adminip+',')
 #pb.run()
-

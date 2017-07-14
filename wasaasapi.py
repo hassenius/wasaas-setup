@@ -8,6 +8,7 @@ class WASaaSAPI:
     self.adminip = ''
     self.wsadmin_user = ''
     self.wsadmin_pass = ''
+    self.vpnConfig_link = ''
     self.space = space
     self.org = org
     self.regionKey = region_key
@@ -26,6 +27,20 @@ class WASaaSAPI:
       'Accept': 'application/json'
     }
 
+  def get_vpnConfig_zip(self):
+    if self.sid == '':
+      self.fetch_resource_details()
+    
+    url = self.baseUrl + '/organizations/%s/spaces/%s/serviceinstances/%s/vpnconfig' % (self.org, self.space, self.sid)
+    r = requests.get(url, headers=self._headers)
+    if r.status_code != 200:
+      print 'Error retrieving service instance vpn configuration. '
+      print 'Server returned status code: %s' % r.status_code
+      print r.text
+      return False   
+    
+    return r.json()['VpnConfig']
+    
   def get_wsadmin_user(self):
     if self.wsadmin_user == '':
       self.fetch_resource_details()
@@ -80,6 +95,7 @@ class WASaaSAPI:
     self.rootpassword   = r.json()[0]['osAdminPassword']
     self.wsadmin_user   = r.json()[0]['wasAdminUser']
     self.wsadmin_pass   = r.json()[0]['wasAdminPass']
+    self.vpnConfig_link = r.json()[0]['vpnConfigLink']
 
     return True
 
